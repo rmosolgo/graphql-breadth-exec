@@ -102,4 +102,49 @@ class GraphQL::Cardinal::Executor::ErrorsTest < Minitest::Test
 
     assert_equal expected, breadth_exec(document, source)
   end
+
+  def test_nested_null_in_non_null_position_propagates
+    document = %|{
+      products(first: 3) {
+        nodes {
+          variants(first: 2) {
+            nodes {
+              __typename
+              id
+            }
+          }
+        }
+      }
+    }|
+
+    source = {
+      "products" => {
+        "nodes" => [
+          {
+            "variants" => {
+              "nodes" => [
+                { "id" => "OK"}
+              ]
+            }
+          },
+          {
+            "variants" => {
+              "nodes" => [
+                { "id" => nil}
+              ]
+            }
+          },
+        ],
+      },
+    }
+
+
+    expected = {
+      "data" => {"products" => {"nodes" => [{"variants" => {"nodes" => [{"__typename" => "Variant", "id" => "OK"}]}}, {"variants" => {"nodes" => nil}}]}},
+      "errors" => [{"message" => "Failed to resolve expected value", "path" => ["products", "nodes", 1, "variants", "nodes", 0, "id"]}]
+    }
+
+
+    assert_equal expected, breadth_exec(document, source)
+  end
 end
