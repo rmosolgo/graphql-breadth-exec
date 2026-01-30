@@ -7,3 +7,4 @@ gem 'pry'
 gem 'pry-byebug'
 gem 'warning'
 gem 'minitest-stub-const'
+gem "graphql", path: "~/code/graphql-ruby"
